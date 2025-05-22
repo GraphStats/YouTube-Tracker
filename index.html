@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tracked YouTube Channels - Statify</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #FF0000;
+      --primary-dark: #CC0000;
+      --secondary: #282828;
+      --background: #0F0F0F;
+      --card-bg: #202020;
+      --text-primary: #FFFFFF;
+      --text-secondary: #AAAAAA;
+      --accent: #3EA6FF;
+      --success: #4CAF50;
+      --error: #FF3333;
+      --border-radius: 12px;
+      --box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+      background-color: var(--background);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .logo i {
+      color: var(--primary);
+      font-size: 2.5rem;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .network-status {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: var(--success);
+      color: white;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+    }
+
+    .network-status.offline {
+      background: var(--error);
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 1rem 1.5rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: var(--transition);
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .stat-card i {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    .stat-content h3 {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-content p {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .search-container {
+      position: relative;
+      max-width: 500px;
+      width: 100%;
+      flex: 2;
+    }
+
+    .search-container i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    input[type="search"] {
+      width: 100%;
+      padding: 0.9rem 1rem 0.9rem 2.75rem;
+      font-size: 1rem;
+      border-radius: var(--border-radius);
+      border: none;
+      background: var(--card-bg);
+      color: var(--text-primary);
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+    }
+
+    input[type="search"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .table-container {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      overflow: hidden;
+      position: relative;
+      min-height: 300px;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+    }
+
+    th {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      font-weight: 500;
+      color: white;
+    }
+
+    th:first-child {
+      border-top-left-radius: var(--border-radius);
+    }
+
+    th:last-child {
+      border-top-right-radius: var(--border-radius);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: var(--transition);
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+    }
+
+    td {
+      padding: 1.25rem 1.5rem;
+      vertical-align: middle;
+    }
+
+    .channel-cell {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .channel-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .channel-avatar i {
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+    }
+
+    .channel-info h3 {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .channel-info p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .subscriber-count {
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .subscriber-count i {
+      margin-right: 0.5rem;
+      color: var(--success);
+    }
+
+    .last-update {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: rgba(62, 166, 255, 0.2);
+      color: var(--accent);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+
+    .empty-state h3 {
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .retry-button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .retry-button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1.5rem;
+      }
+
+      .network-status {
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 0.7rem;
+      }
+
+      .stats-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .stat-card {
+        min-width: 100%;
+      }
+
+      th, td {
+        padding: 1rem;
+      }
+
+      .channel-cell {
+        gap: 0.75rem;
+      }
+
+      .channel-avatar {
+        width: 36px;
+        height: 36px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      .subtitle {
+        font-size: 0.95rem;
+      }
+
+      th {
+        display: none;
+      }
+
+      td {
+        display: block;
+        padding: 0.75rem 1rem;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.25rem;
+      }
+
+      .channel-cell {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .channel-avatar {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="network-status">
+    <i class="fas fa-wifi"></i>
+    <span>Online</span>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="logo">
+        <i class="fab fa-youtube"></i>
+      </div>
+      <h1>Tracked YouTube Channels</h1>
+      <p class="subtitle">Monitor subscriber growth and statistics for your favorite YouTube channels</p>
+    </header>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <i class="fas fa-chart-line"></i>
+        <div class="stat-content">
+          <h3>Total Channels</h3>
+          <p id="channelCount">0</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <i class="fas fa-users"></i>
+        <div class="stat-content">
+          <h3>Combined Subscribers</h3>
+          <p id="totalSubscribers">0</p>
+        </div>
+      </div>
+
+      <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input
+          type="search"
+          id="searchInput"
+          placeholder="Search channels..."
+          aria-label="Search channels"
+        />
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="empty-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <h3>Loading channels...</h3>
+        </div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Channel</th>
+            <th>Subscribers</th>
+            <th>Last Update</th>
+          </tr>
+        </thead>
+        <tbody id="channelsBody">
+          <tr>
+            <td colspan="3" class="empty-state">
+              <i class="fas fa-spinner fa-spin"></i>
+              <h3>Loading channels...</h3>
+              <p>Please wait while we fetch the latest data</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const channelsBody = document.getElementById('channelsBody');
+    const searchInput = document.getElementById('searchInput');
+    const channelCount = document.getElementById('channelCount');
+    const totalSubscribers = document.getElementById('totalSubscribers');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const networkStatus = document.querySelector('.network-status');
+    
+    // Global variables
+    let channels = [];
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 5000; // 5 seconds
+    let refreshInterval;
+    let isFirstLoad = true; // Track if it's the first load
+
+    // Format numbers (1K, 1M)
+    function formatNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      }
+      if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+      }
+      return num.toString();
+    }
+
+    // Format dates to relative time
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now - date) / 1000);
+      const diffInMinutes = Math.floor(diffInSeconds / 60);
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+      
+      if (diffInSeconds < 60) {
+        return 'Just now';
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+      } else if (diffInHours < 24) {
+        return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+      } else if (diffInDays < 7) {
+        return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+      } else {
+        return date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+    }
+
+    // Render channels to the table
+    function renderChannels(list) {
+      if (list.length === 0) {
+        channelsBody.innerHTML = `
+          <tr>
+            <td colspan="3" class="empty-state">
+              <i class="fas fa-exclamation-circle"></i>
+              <h3>No channels found</h3>
+              <p>Try adjusting your search query</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      channelsBody.innerHTML = list.map(({ channelId, subscribers, timestamp, channelName }) => `
+        <tr onclick="window.open('/data/${channelId}', '_blank')">
+          <td data-label="Channel">
+            <div class="channel-cell">
+              <div class="channel-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="channel-info">
+                <h3>${channelName || channelId}</h3>
+                <p>${channelName ? channelId : 'YouTube Channel'}</p>
+              </div>
+            </div>
+          </td>
+          <td data-label="Subscribers" class="subscriber-count">
+            <i class="fas fa-user-plus"></i>${formatNumber(subscribers)}
+          </td>
+          <td data-label="Last Update" class="last-update">
+            ${formatDate(timestamp)}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Update stats cards
+    function updateStats(channels) {
+      channelCount.textContent = formatNumber(channels.length);
+      
+      const totalSubs = channels.reduce((sum, channel) => sum + channel.subscribers, 0);
+      totalSubscribers.textContent = formatNumber(totalSubs);
+      
+      // Cache the data for offline use
+      localStorage.setItem('cachedChannels', JSON.stringify({
+        data: channels,
+        timestamp: new Date().toISOString()
+      }));
+    }
+
+    // Show error message
+    function showError(message) {
+      channelsBody.innerHTML = `
+        <tr>
+          <td colspan="3" class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Failed to load channels</h3>
+            <p>${message}</p>
+            <button class="retry-button" onclick="fetchChannels()">
+              Retry
+            </button>
+          </td>
+        </tr>
+      `;
+      
+      channelCount.textContent = 'Error';
+      totalSubscribers.textContent = 'Error';
+    }
+
+    // Get cached data
+    function getCachedData() {
+      const cached = localStorage.getItem('cachedChannels');
+      if (!cached) return null;
+      
+      try {
+        const parsed = JSON.parse(cached);
+        return {
+          data: parsed.data,
+          timestamp: parsed.timestamp,
+          isCached: true
+        };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Fetch channels from API
+    async function fetchChannels() {
+      // Check network status first
+      if (!navigator.onLine) {
+        const cached = getCachedData();
+        if (cached) {
+          channels = cached.data;
+          updateStats(channels);
+          renderChannels(channels);
+          showError('You are offline. Showing cached data from ' + formatDate(cached.timestamp));
+        } else {
+          showError('You are offline and no cached data is available.');
+        }
+        return;
+      }
+
+      try {
+        // Show loading state only on first load
+        if (isFirstLoad) {
+          loadingOverlay.style.display = 'flex';
+          channelsBody.innerHTML = '';
+        }
+        
+        retryCount = 0; // Reset retry counter on new attempt
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // Timeout after 10 seconds
+        
+        const res = await fetch('/api/channels', { 
+          signal: controller.signal,
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        // Check response status
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status} ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        
+        // Validate data format
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format received from server');
+        }
+        
+        channels = data;
+        channels.sort((a, b) => b.subscribers - a.subscribers);
+        
+        updateStats(channels);
+        renderChannels(channels);
+        
+        // Start auto-refresh if not already running
+        if (!refreshInterval) {
+          startAutoRefresh();
+        }
+        
+        // Mark first load as complete
+        isFirstLoad = false;
+        
+      } catch (err) {
+        console.error('Error fetching channels:', err);
+        
+        // Try to use cached data if available
+        const cached = getCachedData();
+        if (cached) {
+          channels = cached.data;
+          updateStats(channels);
+          renderChannels(channels);
+          showError(`${err.message}. Showing cached data from ${formatDate(cached.timestamp)}`);
+        } else {
+          // Retry if we haven't reached max retries
+          if (retryCount < maxRetries) {
+            retryCount++;
+            showError(`${err.message}. Retrying in ${retryDelay/1000} seconds... (${retryCount}/${maxRetries})`);
+            setTimeout(fetchChannels, retryDelay);
+          } else {
+            showError(err.message);
+          }
+        }
+      } finally {
+        // Hide loading overlay if it was shown
+        loadingOverlay.style.display = 'none';
+      }
+    }
+
+    // Start auto-refresh
+    function startAutoRefresh() {
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(fetchChannels, 10000); // Refresh every 30 seconds
+    }
+
+    // Handle search input
+    searchInput.addEventListener('input', () => {
+      const val = searchInput.value.trim().toLowerCase();
+      const filtered = channels.filter(c => 
+        c.channelId.toLowerCase().includes(val) || 
+        (c.channelName && c.channelName.toLowerCase().includes(val))
+      ).sort((a, b) => b.subscribers - a.subscribers);
+      renderChannels(filtered);
+    });
+
+    // Network status detection
+    function updateNetworkStatus() {
+      if (navigator.onLine) {
+        networkStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span>';
+        networkStatus.classList.remove('offline');
+      } else {
+        networkStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Offline</span>';
+        networkStatus.classList.add('offline');
+        
+        const cached = getCachedData();
+        if (cached) {
+          channels = cached.data;
+          updateStats(channels);
+          renderChannels(channels);
+          showError('You are offline. Showing cached data from ' + formatDate(cached.timestamp));
+        }
+      }
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      // Check network status
+      updateNetworkStatus();
+      window.addEventListener('online', updateNetworkStatus);
+      window.addEventListener('offline', updateNetworkStatus);
+      
+      // Try to load cached data first for faster initial render
+      const cached = getCachedData();
+      if (cached) {
+        channels = cached.data;
+        updateStats(channels);
+        renderChannels(channels);
+        // If we have cached data, don't show loading overlay on first fetch
+        isFirstLoad = false;
+      }
+      
+      // Then fetch fresh data
+      fetchChannels();
+    });
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+    });
+  </script>
+</body>
+</html>
